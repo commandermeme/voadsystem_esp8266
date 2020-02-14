@@ -4,8 +4,8 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 
-const char* ssid = "Gourgeous";
-const char* password = "Mypreciousone";
+const char* ssid = "memz";
+const char* password = "Mypreciousone@";
 
 TinyGPSPlus gps;
 SH1106Wire display(0x3c, D1, D2);

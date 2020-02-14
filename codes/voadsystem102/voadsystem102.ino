@@ -7,8 +7,8 @@
 SH1106Wire display(0x3c, D1, D2);
 TinyGPSPlus gps;
 
-const char* ssid = "Gourgeous";
-const char* password = "Mypreciousone";
+const char* ssid = "memz";
+const char* password = "Mypreciousone@";
 String apikey = "Arr8rRtGsDs4Wd5RmcwJlEBI9VeE7Zc00CfGaKhktcC87JwSfikFInKiVWRVVWKc";
 //String latitude = "10.301535";
 //String longitude = "123.890853";
@@ -46,7 +46,7 @@ void loop()
     if(gps.encode(Serial.read())) {
       if(now - updateScreen > 100) {
         displayGps();
-        apiConnection();
+//        apiConnection();
         updateScreen = now; 
       }
     }
@@ -93,8 +93,11 @@ void displayGps() {
     
 //    display.drawString(0, 40, "Time: " + String(gps.time.hour())+ ":" + String(gps.time.minute())+ ":" + String(gps.time.second()));
 //    display.drawString(0, 50, "Date: " + String(gps.date.month())+ ":" + String(gps.date.day())+ ":" + String(gps.date.year()));
-
-    apiConnection();
+    String latitude = String(gps.location.lat(), 6);
+    String longitude = String(gps.location.lng(), 6);
+    String current_speed = String(gps.speed.kmph(), 0);
+    
+    apiConnection(latitude, longitude, current_speed);
     
     display.display();
     display.clear();
@@ -114,14 +117,15 @@ void displayGps() {
   }
 }
 
-String latitude = latDisplay();
-String longitude = longDisplay();
+//String latitude = latDisplay();
+//String longitude = longDisplay();
 
-void apiConnection() {
+void apiConnection(String latitude, String longitude, String current_speed) {
   if (WiFi.status() == WL_CONNECTED || gps.location.isValid()) 
   {
     HTTPClient http; //Object of class HTTPClient
-    http.begin("http://dev.virtualearth.net/rest/v1/locations/" +latitude+ "," +longitude+ "?o=json&key=" +apikey);
+    http.begin("http://192.168.1.4/voadsystem/public/api/trackings/latitude=" +latitude+ "&longitude=" +longitude+ "&speed=" +current_speed+ "&system=voad001");
+//    http.begin("http://dev.virtualearth.net/rest/v1/locations/" +latitude+ "," +longitude+ "?o=json&key=" +apikey);
 //    http.begin("http://jsonplaceholder.typicode.com/users/1");
     int httpCode = http.GET();
 
@@ -132,27 +136,34 @@ void apiConnection() {
       JsonObject& root = jsonBuffer.parseObject(http.getString());
 
 //      const char* copyright = root["copyright"];
-      const char* street = root["resourceSets"][0]["resources"][0]["address"]["addressLine"]; 
-      const char* adminDistrict2 = root["resourceSets"][0]["resources"][0]["address"]["adminDistrict2"];
+//      const char* street = root["resourceSets"][0]["resources"][0]["address"]["addressLine"]; 
+//      const char* adminDistrict2 = root["resourceSets"][0]["resources"][0]["address"]["adminDistrict2"];
+
+        const char* street = root["street"]; 
+        const char* speed_limit = root["speed_limit"];
+        const char* speed = root["speed"]; 
+        const char* violation = root["violation"];
       
 //      Serial.print("Copy Right:");
 //      Serial.println(copyright);
-      Serial.print("Street:");
-      Serial.println(street);
-      Serial.print("Province:");
-      Serial.println(adminDistrict2);
+//      Serial.print("Street:");
+//      Serial.println(street);
+//      Serial.print("Province:");
+//      Serial.println(adminDistrict2);
 
       display.setFont(ArialMT_Plain_10);
       display.setTextAlignment(TEXT_ALIGN_LEFT);
-      display.drawString(0, 0, String(street)+ "," +String(adminDistrict2));
-      display.display();
-      display.clear();
+//      display.drawString(0, 0, String(street)+ "," +String(speed));
+      display.drawString(0, 0, String(street)+ "," +String(speed_limit)+ "," +String(speed)+ "," +String(violation));
+//      display.display();
+//      display.clear();
 
 //      String payload = http.getString();
 //      Serial.println(payload);
     }
     else {
       Serial.println("ERROR!");
+      display.drawString(0, 0, "Error!");
     }
     http.end(); //Close connection
   }
